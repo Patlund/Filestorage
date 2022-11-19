@@ -22,15 +22,12 @@ public class FileService {
     }
 
     public File store(MultipartFile file) throws IOException {
-        String filename = file.getOriginalFilename();
-        var fileToStore = new File(UUID.randomUUID().toString(),filename,file.getContentType(),file.getBytes());
+        var fileToStore = new File(UUID.randomUUID().toString(),file.getOriginalFilename(),file.getContentType(),file.getBytes());
         return fileRepository.save(fileToStore);
     }
 
     public File getFileById(String id){
-
         Optional<File> optionalFile = fileRepository.findById(id);
-
         if(optionalFile.isPresent()){
             return optionalFile.get();
         }
@@ -39,6 +36,14 @@ public class FileService {
 
     public List<File> getAllFiles(){
         return fileRepository.findAll();
+    }
+
+    public File deleteFile(String id){
+        var fileToDelete = fileRepository.findById(id);
+        if(fileToDelete.isPresent()){
+            fileRepository.delete(fileToDelete.get());
+        }
+        return null;
     }
 
 

@@ -2,9 +2,18 @@ package com.example.filestorage.controllers;
 
 import com.example.filestorage.data.File;
 import com.example.filestorage.services.FileService;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.io.IOException;
 import java.util.List;
@@ -20,11 +29,36 @@ public class FileController {
         this.fileService = fileService;
     }
 
-    @PostMapping
-    public File uploadFile(@RequestParam("file") MultipartFile file) throws IOException {
-        return fileService.store(file);
+    @PostMapping("upload")
+    public ResponseEntity uploadFile(@RequestParam("file") MultipartFile file) throws IOException {
+        File attachment = fileService.store(file);
+        var downloadURL = ServletUriComponentsBuilder.fromCurrentContextPath()
+                .path("/download/")
+                .path(attachment.getId())
+                .toUriString();
+        var response = new DownloadResponse(file.getName(),downloadURL,file.getContentType(),file.getSize());
+        return ResponseEntity.ok(response);
     }
-    @GetMapping("/{id}")
+
+    @GetMapping("/download/{fileId}")
+    public ResponseEntity<Resource> downloadFile(@PathVariable String fileId) throws Exception {
+        var attachment = fileService.getFileById(fileId);
+        return  ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(attachment.getType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + attachment.getName()
+                                + "\"")
+                .body(new ByteArrayResource(attachment.getData()));
+    }
+
+    @DeleteMapping("/delete/{fileId}")
+    public ResponseEntity deleteFile(@PathVariable String fileId){
+        var fileToDelete = fileService.getFileById(fileId);
+        fileService.deleteFile(fileId);
+        return ResponseEntity.ok(fileToDelete);
+    }
+
+    @GetMapping("/get/{id}")
     public File getFileById(@PathVariable String id){
         return fileService.getFileById(id);
     }
@@ -34,5 +68,16 @@ public class FileController {
         return fileService.getAllFiles();
     }
 
+    @Getter
+    @Setter
+    @AllArgsConstructor
+    public static class DownloadResponse{
 
+        private String filename;
+        private String downloadURL;
+        private String fileType;
+        private long fileSize;
+    }
 }
+
+
