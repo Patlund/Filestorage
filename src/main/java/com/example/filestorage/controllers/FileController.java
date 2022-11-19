@@ -52,7 +52,7 @@ public class FileController {
     }
 
     @DeleteMapping("/delete/{fileId}")
-    public ResponseEntity deleteFile(@PathVariable String fileId){
+    public ResponseEntity<File> deleteFile(@PathVariable String fileId){
         var fileToDelete = fileService.getFileById(fileId);
         fileService.deleteFile(fileId);
         return ResponseEntity.ok(fileToDelete);
