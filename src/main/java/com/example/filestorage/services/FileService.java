@@ -21,8 +21,8 @@ public class FileService {
         this.fileRepository = fileRepository;
     }
 
-    public File store(MultipartFile file) throws IOException {
-        var fileToStore = new File(UUID.randomUUID().toString(),file.getOriginalFilename(),file.getContentType(),file.getBytes());
+    public File store(MultipartFile file, String userId) throws IOException {
+        var fileToStore = new File(UUID.randomUUID().toString(),file.getOriginalFilename(),file.getContentType(),userId,file.getBytes());
         return fileRepository.save(fileToStore);
     }
 

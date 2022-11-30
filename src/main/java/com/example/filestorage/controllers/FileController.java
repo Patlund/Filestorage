@@ -30,8 +30,8 @@ public class FileController {
     }
 
     @PostMapping("upload")
-    public ResponseEntity uploadFile(@RequestParam("file") MultipartFile file) throws IOException {
-        File attachment = fileService.store(file);
+    public ResponseEntity uploadFile(@RequestParam("file") MultipartFile file, @RequestHeader("userId")String userId) throws IOException {
+        File attachment = fileService.store(file, userId);
         var downloadURL = ServletUriComponentsBuilder.fromCurrentContextPath()
                 .path("/download/")
                 .path(attachment.getId())

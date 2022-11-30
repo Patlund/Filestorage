@@ -23,6 +23,8 @@ public class File {
 
     private String type;
 
+    private String userId;
+
     @Lob
     private byte[] data;
 
