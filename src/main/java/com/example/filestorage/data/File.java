@@ -8,6 +8,8 @@ import lombok.Setter;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Lob;
+import javax.persistence.ManyToOne;
+import java.util.Optional;
 
 @Entity(name = "files")
 @Getter
@@ -19,11 +21,10 @@ public class File {
     @Id
     private String id;
 
-    private String name;
+    private String name,type;
 
-    private String type;
-
-    private String userId;
+    @ManyToOne
+    private User user;
 
     @Lob
     private byte[] data;

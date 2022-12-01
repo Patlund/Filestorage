@@ -1,6 +1,7 @@
 package com.example.filestorage.controllers;
 
 import com.example.filestorage.data.File;
+import com.example.filestorage.data.User;
 import com.example.filestorage.services.FileService;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -11,6 +12,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -30,8 +32,8 @@ public class FileController {
     }
 
     @PostMapping("upload")
-    public ResponseEntity uploadFile(@RequestParam("file") MultipartFile file, @RequestHeader("userId")String userId) throws IOException {
-        File attachment = fileService.store(file, userId);
+    public ResponseEntity uploadFile(@RequestParam("file") MultipartFile file, @AuthenticationPrincipal User user) throws IOException {
+        File attachment = fileService.store(file, user);
         var downloadURL = ServletUriComponentsBuilder.fromCurrentContextPath()
                 .path("/download/")
                 .path(attachment.getId())
@@ -41,14 +43,17 @@ public class FileController {
     }
 
     @GetMapping("/download/{fileId}")
-    public ResponseEntity<Resource> downloadFile(@PathVariable String fileId) throws Exception {
+    public ResponseEntity<Resource> downloadFile(@PathVariable String fileId, @AuthenticationPrincipal User user) throws Exception {
         var attachment = fileService.getFileById(fileId);
-        return  ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(attachment.getType()))
-                .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"" + attachment.getName()
-                                + "\"")
-                .body(new ByteArrayResource(attachment.getData()));
+        if(attachment != null && attachment.getUser() == user) {
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(attachment.getType()))
+                    .header(HttpHeaders.CONTENT_DISPOSITION,
+                            "attachment; filename=\"" + attachment.getName()
+                                    + "\"")
+                    .body(new ByteArrayResource(attachment.getData()));
+        }
+        return ResponseEntity.notFound().build();
     }
 
     @DeleteMapping("/delete/{fileId}")

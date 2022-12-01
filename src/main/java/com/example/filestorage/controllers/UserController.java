@@ -1,5 +1,6 @@
 package com.example.filestorage.controllers;
 
+import com.example.filestorage.exceptions.UserAlreadyExistsException;
 import com.example.filestorage.services.UserService;
 import lombok.Getter;
 import lombok.Setter;
@@ -20,7 +21,7 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity registerUser(@RequestBody RegisterUser registerUser){
+    public ResponseEntity registerUser(@RequestBody RegisterUser registerUser) throws UserAlreadyExistsException {
         var user = userService.registerUser(registerUser.username,registerUser.password);
         return ResponseEntity.ok(user.getUsername() + " has been created!");
 
