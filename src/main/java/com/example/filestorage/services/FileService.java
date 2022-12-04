@@ -17,12 +17,10 @@ import java.util.UUID;
 public class FileService {
 
     private final FileRepository fileRepository;
-    private final UserRepository userRepository;
 
     @Autowired
-    public FileService(FileRepository fileRepository, UserRepository userRepository) {
+    public FileService(FileRepository fileRepository) {
         this.fileRepository = fileRepository;
-        this.userRepository = userRepository;
     }
 
     public File store(MultipartFile file, User user) throws IOException {
@@ -37,10 +35,6 @@ public class FileService {
             return optionalFile.get();
         }
         return null;
-    }
-
-    public List<File> getAllFiles(){
-        return fileRepository.findAll();
     }
 
     public File deleteFile(String id){

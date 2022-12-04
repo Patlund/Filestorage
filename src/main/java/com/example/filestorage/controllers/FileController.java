@@ -18,7 +18,9 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("file")
@@ -38,14 +40,16 @@ public class FileController {
                 .path("/download/")
                 .path(attachment.getId())
                 .toUriString();
-        var response = new DownloadResponse(file.getName(),downloadURL,file.getContentType(),file.getSize());
+        var response = new DownloadResponse(file.getName(),downloadURL,file.getContentType(),attachment.getUser().getUsername(),file.getSize());
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/download/{fileId}")
     public ResponseEntity<Resource> downloadFile(@PathVariable String fileId, @AuthenticationPrincipal User user) throws Exception {
         var attachment = fileService.getFileById(fileId);
-        if(attachment != null && attachment.getUser() == user) {
+        if(attachment != null &&
+                user.getUserId().equals(attachment.getUser().getUserId()) &&
+                user.getUsername().equals(attachment.getUser().getUsername())) {
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(attachment.getType()))
                     .header(HttpHeaders.CONTENT_DISPOSITION,
@@ -53,35 +57,37 @@ public class FileController {
                                     + "\"")
                     .body(new ByteArrayResource(attachment.getData()));
         }
-        return ResponseEntity.notFound().build();
+            return ResponseEntity.notFound().build();
     }
 
     @DeleteMapping("/delete/{fileId}")
-    public ResponseEntity<File> deleteFile(@PathVariable String fileId){
+    public ResponseEntity<File> deleteFile(@PathVariable String fileId, @AuthenticationPrincipal User user){
         var fileToDelete = fileService.getFileById(fileId);
-        fileService.deleteFile(fileId);
-        return ResponseEntity.ok(fileToDelete);
+        if(fileToDelete != null &&
+                user.getUserId().equals(fileToDelete.getUser().getUserId()) &&
+                user.getUsername().equals(fileToDelete.getUser().getUsername())) {
+            fileService.deleteFile(fileId);
+            var response = new DeleteResponse(fileToDelete.getName(),fileToDelete.getType(),fileToDelete.getUser().getUsername());
+            return ResponseEntity.ok(fileToDelete);
+        }
+        return ResponseEntity.notFound().build();
     }
 
-    @GetMapping("/get/{id}")
-    public File getFileById(@PathVariable String id){
-        return fileService.getFileById(id);
-    }
-
-    @GetMapping("/list")
-    public List<File> getFileList(){
-        return fileService.getAllFiles();
-    }
 
     @Getter
     @Setter
     @AllArgsConstructor
     public static class DownloadResponse{
-
-        private String filename;
-        private String downloadURL;
-        private String fileType;
+        private String filename,downloadURL,fileType, user;
         private long fileSize;
+    }
+
+    @Getter
+    @Setter
+    @AllArgsConstructor
+    public static class DeleteResponse{
+        private String filename,fileType,username;
+
     }
 }
 
